@@ -1,0 +1,10 @@
+services:
+  noteflow:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - noteflow_data:/app/data
+
+volumes:
+  noteflow_data:

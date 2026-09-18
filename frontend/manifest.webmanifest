@@ -1,0 +1,19 @@
+{
+  "name": "NoteFlow",
+  "short_name": "NoteFlow",
+  "description": "Capture ideas, plan work, and keep your notes organized.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6fb",
+  "theme_color": "#6456d8",
+  "icons": [
+    {
+      "src": "icons/noteflow.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: noteflow
+    runtime: docker
+    plan: starter
+    healthCheckPath: /
+    disk:
+      name: noteflow-data
+      mountPath: /app/data
+      sizeGB: 1
