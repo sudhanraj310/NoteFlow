@@ -1,5 +1,5 @@
-const API_BASE = new URL("/api/notes", window.location.origin).toString();
-const AUTH_BASE = new URL("/api/auth", window.location.origin).toString();
+const API_BASE = "https://noteflow-u0vy.onrender.com/api/notes";
+const AUTH_BASE = "https://noteflow-u0vy.onrender.com/api/auth";
 
 const state = {
   allNotes: [],
