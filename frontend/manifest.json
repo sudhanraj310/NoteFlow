@@ -1,0 +1,17 @@
+{
+  "name": "NoteFlow",
+  "short_name": "NoteFlow",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6456d8",
+  "description": "A simple personal notes and to-do application",
+  "icons": [
+    {
+      "src": "/icons/noteflow.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

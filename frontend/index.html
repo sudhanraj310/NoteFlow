@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="NoteFlow">
+  <link rel="manifest" href="/manifest.json">
   <title>NoteFlow — Professional notes</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/noteflow.svg" type="image/svg+xml">
@@ -205,5 +206,12 @@
 
   <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
   <script src="js/app.js"></script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js");
+    });
+  }
+</script>
 </body>
 </html>
