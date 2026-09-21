@@ -184,22 +184,6 @@ button:disabled { cursor: not-allowed; opacity: .65; }
   display: block;
 }
 
-.auth-logo .brand-mark {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.auth-logo .brand-mark img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
 .auth-logo h1 {
   margin: 0;
   font-size: 28px;
