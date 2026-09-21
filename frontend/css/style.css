@@ -311,3 +311,9 @@ body.dark-theme .profile-card {
   background: #202020;
   border-color: #2d2d2d;
 }
+.brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
