@@ -172,24 +172,32 @@ button:disabled { cursor: not-allowed; opacity: .65; }
   width: 31px;
   height: 31px;
   flex: 0 0 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-logo .brand-mark img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
 }
 
 .auth-logo .brand-mark {
   width: 31px;
   height: 31px;
   flex: 0 0 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .auth-logo .brand-mark img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
 }
 
 .auth-logo h1 {
