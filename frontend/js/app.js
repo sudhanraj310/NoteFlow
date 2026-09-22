@@ -1,5 +1,5 @@
-const API_BASE = "https://noteflow-u0vy.onrender.com/api/notes";
-const AUTH_BASE = "https://noteflow-u0vy.onrender.com/api/auth";
+const API_BASE = new URL("/api/notes", window.location.origin).toString();
+const AUTH_BASE = new URL("/api/auth", window.location.origin).toString();
 
 const state = {
   allNotes: [],
@@ -76,14 +76,30 @@ async function logout() {
 async function api(path = "", options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
   });
+
   const raw = await response.text();
+
   let data = null;
-  try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
-  if (!response.ok) {
-    throw new Error(data?.message || data?.error || "Something went wrong. Please try again.");
+
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = raw;
   }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      "Something went wrong. Please try again."
+    );
+  }
+
   return data;
 }
 async function login(username, password) {
@@ -659,22 +675,58 @@ function initializeEvents() {
   });
 
   elements.noteForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    const payload = { title: elements.noteTitle.value, content: elements.noteContent.value, category: elements.noteCategory.value, noteType: elements.noteType.value, pinned: elements.notePinned.checked, checklistItems: elements.noteType.value === "CHECKLIST" ? getChecklistEditorItems() : [] };
-    if (!validateForm(payload)) return;
-    elements.saveButton.disabled = true;
-    try {
-      const isEdit = Boolean(state.editingNoteId);
-      await (isEdit ? updateNote(state.editingNoteId, payload) : createNote(payload));
-      closeModal(elements.noteModal);
-      showToast(isEdit ? "Note updated successfully" : "Note created successfully");
-      await refreshCurrentView();
-    } catch (error) {
-      showToast(error.message || "Could not save the note.", "error");
-    } finally {
-      elements.saveButton.disabled = false;
+  event.preventDefault();
+
+  const payload = {
+    title: elements.noteTitle.value,
+    content: elements.noteContent.value,
+    category: elements.noteCategory.value,
+    noteType: elements.noteType.value,
+    pinned: elements.notePinned.checked,
+    checklistItems:
+      elements.noteType.value === "CHECKLIST"
+        ? getChecklistEditorItems()
+        : []
+  };
+
+  if (!validateForm(payload)) return;
+
+  elements.saveButton.disabled = true;
+
+  try {
+    const isEdit = Boolean(state.editingNoteId);
+
+    const savedNote = isEdit
+      ? await updateNote(state.editingNoteId, payload)
+      : await createNote(payload);
+
+    // Update the local UI immediately using the saved response
+    if (isEdit) {
+      replaceNote(savedNote);
+    } else {
+      state.allNotes.unshift(savedNote);
     }
-  });
+
+    updateStatistics();
+    renderNotes();
+
+    closeModal(elements.noteModal);
+
+    showToast(
+      isEdit
+        ? "Note updated successfully"
+        : "Note created successfully"
+    );
+
+  } catch (error) {
+    showToast(
+      error.message || "Could not save the note.",
+      "error"
+    );
+  } finally {
+    elements.saveButton.disabled = false;
+  }
+});
 
   document.querySelector("#confirm-delete-button").addEventListener("click", deleteNote);
   elements.viewEdit.addEventListener("click", () => state.viewingNote && openEditModal(state.viewingNote));
