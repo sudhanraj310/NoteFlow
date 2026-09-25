@@ -65,46 +65,46 @@ public class NoteRepository {
     // Create note for a user
     public Note save(Note note) {
 
-        String sql =
-                "INSERT INTO notes " +
-                "(user_id, title, content, category, note_type, " +
-                "is_pinned, checklist_items) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    String sql =
+            "INSERT INTO notes " +
+            "(user_id, title, content, category, note_type, " +
+            "is_pinned, checklist_items) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        String checklistJson = serializeChecklist(note);
+    String checklistJson = serializeChecklist(note);
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+    KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        jdbcTemplate.update(connection -> {
+    jdbcTemplate.update(connection -> {
 
-            PreparedStatement ps =
-                    connection.prepareStatement(
-                            sql,
-                            Statement.RETURN_GENERATED_KEYS
-                    );
+        PreparedStatement ps =
+                connection.prepareStatement(
+                        sql,
+                        new String[]{"note_id"}
+                );
 
-            ps.setInt(1, note.getUserId());
-            ps.setString(2, note.getTitle());
-            ps.setString(3, note.getContent());
-            ps.setString(4, note.getCategory());
-            ps.setString(5, note.getNoteType());
-            ps.setBoolean(6, note.isPinned());
-            ps.setString(7, checklistJson);
+        ps.setInt(1, note.getUserId());
+        ps.setString(2, note.getTitle());
+        ps.setString(3, note.getContent());
+        ps.setString(4, note.getCategory());
+        ps.setString(5, note.getNoteType());
+        ps.setBoolean(6, note.isPinned());
+        ps.setString(7, checklistJson);
 
-            return ps;
+        return ps;
 
-        }, keyHolder);
+    }, keyHolder);
 
-        Number key = keyHolder.getKey();
+    Number key = keyHolder.getKey();
 
-        if (key != null) {
-            return findById(
-                    note.getUserId(),
-                    key.intValue()
-            ).orElse(note);
-        }
+    if (key != null) {
+        return findById(
+                note.getUserId(),
+                key.intValue()
+        ).orElse(note);
+    }
 
-        return note;
+    return note;
     }
 
     // Update only user's own note
