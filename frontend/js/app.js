@@ -384,7 +384,13 @@ function viewNote(note) {
     elements.viewBody.className = `view-body ${note.content ? "" : "empty-content"}`;
     elements.viewBody.textContent = note.content || "No content added to this note.";
   }
-  elements.viewMeta.innerHTML = `<span><i class="fa-regular fa-file-lines"></i>${note.noteType === "CHECKLIST" ? "Checklist" : "Text note"}</span><span><i class="fa-regular fa-calendar"></i>Created ${formatDate(note.createdAt)}</span><span><i class="fa-regular fa-clock"></i>Updated ${formatDate(note.updatedAt)}</span>${note.pinned ? '<span class="pinned-meta"><i class="fa-solid fa-thumbtack"></i>Pinned</span>' : ""}`;
+  elements.viewMeta.innerHTML =
+  `<span><i class="fa-regular fa-file-lines"></i>${note.noteType === "CHECKLIST" ? "Checklist" : "Text note"}</span>` +
+  `<span><i class="fa-solid fa-flag"></i>Importance: ${escapeHtml(note.importance || "MEDIUM")}</span>` +
+  `<span><i class="fa-regular fa-calendar"></i>Created ${formatDate(note.createdAt)}</span>` +
+  `<span><i class="fa-regular fa-clock"></i>Updated ${formatDate(note.updatedAt)}</span>` +
+  `${note.reminderEnabled && note.reminderTime ? `<span><i class="fa-regular fa-bell"></i>Reminder: ${formatDate(note.reminderTime)}</span>` : ""}` +
+  `${note.pinned ? '<span class="pinned-meta"><i class="fa-solid fa-thumbtack"></i>Pinned</span>' : ""}`;
   openModal(elements.viewModal);
 }
 
@@ -694,6 +700,16 @@ function initializeEvents() {
   category: elements.noteCategory.value,
   noteType: elements.noteType.value,
   pinned: elements.notePinned.checked,
+  checklistItems:
+  importance.elements.noteImportance.value,
+
+reminderTime:
+  elements.noteReminderTime.value
+    ? elements.noteReminderTime.value
+    : null,
+
+reminderEnabled:
+  elements.noteReminderEnabled.checked,
 
   importance: elements.noteImportance.value,
 
