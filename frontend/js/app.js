@@ -523,6 +523,53 @@ function getChecklistEditorItems() {
   }));
 }
 
+async function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    showToast("Notifications are not supported on this device.", "error");
+    return false;
+  }
+
+  if (Notification.permission === "granted") {
+    return true;
+  }
+
+  if (Notification.permission === "denied") {
+    showToast(
+      "Notifications are blocked. Enable them from browser settings.",
+      "error"
+    );
+    return false;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    showToast("Notifications enabled");
+    return true;
+  }
+
+  showToast("Notification permission was not granted.", "error");
+  return false;
+}
+
+function testSystemNotification() {
+  if (Notification.permission !== "granted") {
+    showToast("Please enable notifications first.", "error");
+    return;
+  }
+
+  const notification = new Notification("NoteFlow", {
+    body: "🔔 Notifications are working!",
+    icon: "/icons/icon-192.png",
+    tag: "noteflow-test"
+  });
+
+  notification.onclick = () => {
+    window.focus();
+    notification.close();
+  };
+}
+
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
   toast.className = `toast ${type === "error" ? "error" : ""}`;
