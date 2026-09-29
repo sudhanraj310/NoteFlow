@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS notes (
     note_type VARCHAR(20) NOT NULL,
     is_pinned BOOLEAN DEFAULT FALSE,
     checklist_items TEXT,
+    importance VARCHAR(20) DEFAULT 'MEDIUM',
+    reminder_time TIMESTAMP NULL,
+    reminder_enabled BOOLEAN DEFAULT FALSE,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -61,7 +64,10 @@ INSERT INTO notes
     category,
     note_type,
     is_pinned,
-    checklist_items
+    checklist_items,
+    importance,
+    reminder_time,
+    reminder_enabled
 )
 SELECT
     user_id,
@@ -70,7 +76,10 @@ SELECT
     'Personal',
     'TEXT',
     TRUE,
-    '[]'
+    '[]',
+    'HIGH',
+    NULL,
+    FALSE
 FROM users
 WHERE username = 'demo'
 AND NOT EXISTS (
@@ -88,7 +97,10 @@ INSERT INTO notes
     category,
     note_type,
     is_pinned,
-    checklist_items
+    checklist_items,
+    importance,
+    reminder_time,
+    reminder_enabled
 )
 SELECT
     user_id,
@@ -97,7 +109,10 @@ SELECT
     'College',
     'TEXT',
     FALSE,
-    '[]'
+    '[]',
+    'MEDIUM',
+    NULL,
+    FALSE
 FROM users
 WHERE username = 'demo'
 AND NOT EXISTS (
@@ -105,3 +120,12 @@ AND NOT EXISTS (
     FROM notes
     WHERE title = 'Java project roadmap'
 );
+
+ALTER TABLE notes
+ADD COLUMN IF NOT EXISTS importance VARCHAR(20) DEFAULT 'MEDIUM';
+
+ALTER TABLE notes
+ADD COLUMN IF NOT EXISTS reminder_time TIMESTAMP NULL;
+
+ALTER TABLE notes
+ADD COLUMN IF NOT EXISTS reminder_enabled BOOLEAN DEFAULT FALSE;
