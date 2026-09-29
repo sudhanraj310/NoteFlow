@@ -291,6 +291,7 @@ async function loadNotes(showLoader = true) {
     state.allNotes = await api();
     updateStatistics();
     renderNotes();
+    checkReminderNotifications();
   } catch (error) {
     elements.notesGrid.innerHTML = "";
     elements.error.hidden = false;
@@ -551,6 +552,47 @@ async function requestNotificationPermission() {
   showToast("Notification permission was not granted.", "error");
   return false;
 }
+
+function showReminderNotification(note) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+  if (!note.reminderEnabled || !note.reminderTime) return;
+
+  const reminderKey =
+    `noteflow-reminder-${note.noteId}-${note.reminderTime}`;
+
+  if (localStorage.getItem(reminderKey)) return;
+
+  localStorage.setItem(reminderKey, "shown");
+
+  navigator.serviceWorker.ready.then(registration => {
+    registration.showNotification("NoteFlow", {
+      body: `Reminder: ${note.title}`,
+      icon: "/icons/noteflow.svg",
+      badge: "/icons/noteflow.svg",
+      tag: reminderKey,
+      data: {
+        noteId: note.noteId
+      }
+    });
+  });
+}
+
+function checkReminderNotifications() {
+  const now = new Date();
+
+  state.allNotes.forEach(note => {
+    if (!note.reminderEnabled || !note.reminderTime) return;
+
+    const reminderTime = parseLocalDate(note.reminderTime);
+
+    if (reminderTime <= now) {
+      showReminderNotification(note);
+    }
+  });
+}
+
+setInterval(checkReminderNotifications, 30000);
 
 function testSystemNotification() {
   if (Notification.permission !== "granted") {
