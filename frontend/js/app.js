@@ -700,16 +700,6 @@ function initializeEvents() {
   category: elements.noteCategory.value,
   noteType: elements.noteType.value,
   pinned: elements.notePinned.checked,
-  checklistItems:
-  importance.elements.noteImportance.value,
-
-reminderTime:
-  elements.noteReminderTime.value
-    ? elements.noteReminderTime.value
-    : null,
-
-reminderEnabled:
-  elements.noteReminderEnabled.checked,
 
   importance: elements.noteImportance.value,
 
@@ -718,7 +708,8 @@ reminderEnabled:
       ? elements.noteReminderTime.value
       : null,
 
-  reminderEnabled: elements.noteReminderEnabled.checked,
+  reminderEnabled:
+    elements.noteReminderEnabled.checked,
 
   checklistItems:
     elements.noteType.value === "CHECKLIST"
