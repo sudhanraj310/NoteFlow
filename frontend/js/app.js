@@ -39,6 +39,9 @@ const elements = {
   checklistEditor: document.querySelector("#checklist-editor"),
   checklistItems: document.querySelector("#checklist-items"),
   notePinned: document.querySelector("#note-pinned"),
+  noteImportance: document.querySelector("#note-importance"),
+  noteReminderTime: document.querySelector("#note-reminder-time"),
+  noteReminderEnabled: document.querySelector("#note-reminder-enabled"),
   modalTitle: document.querySelector("#modal-title"),
   modalEyebrow: document.querySelector("#modal-eyebrow"),
   saveButton: document.querySelector("#save-note-button"),
@@ -465,6 +468,14 @@ function openEditModal(note) {
   elements.noteType.value = note.noteType;
   elements.noteContent.value = note.content || "";
   elements.notePinned.checked = note.pinned;
+  elements.noteImportance.value = note.importance || "MEDIUM";
+
+elements.noteReminderTime.value = note.reminderTime
+  ? String(note.reminderTime).replace(" ", "T").slice(0, 16)
+  : "";
+
+elements.noteReminderEnabled.checked =
+  Boolean(note.reminderEnabled);
   elements.modalEyebrow.textContent = "EDIT";
   elements.modalTitle.textContent = "Edit note";
   elements.saveButton.querySelector("span").textContent = "Save changes";
@@ -678,18 +689,28 @@ function initializeEvents() {
   event.preventDefault();
 
   const payload = {
-    title: elements.noteTitle.value,
-    content: elements.noteContent.value,
-    category: elements.noteCategory.value,
-    noteType: elements.noteType.value,
-    pinned: elements.notePinned.checked,
-    checklistItems:
-      elements.noteType.value === "CHECKLIST"
-        ? getChecklistEditorItems()
-        : []
-  };
+  title: elements.noteTitle.value,
+  content: elements.noteContent.value,
+  category: elements.noteCategory.value,
+  noteType: elements.noteType.value,
+  pinned: elements.notePinned.checked,
 
-  if (!validateForm(payload)) return;
+  importance: elements.noteImportance.value,
+
+  reminderTime:
+    elements.noteReminderTime.value
+      ? elements.noteReminderTime.value
+      : null,
+
+  reminderEnabled: elements.noteReminderEnabled.checked,
+
+  checklistItems:
+    elements.noteType.value === "CHECKLIST"
+      ? getChecklistEditorItems()
+      : []
+};
+  
+ if (!validateForm(payload)) return;
 
   elements.saveButton.disabled = true;
 
