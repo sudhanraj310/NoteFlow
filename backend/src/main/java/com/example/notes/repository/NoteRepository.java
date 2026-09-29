@@ -4,13 +4,13 @@ import com.example.notes.model.Note;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,8 @@ public class NoteRepository {
 
     private static final String SELECT_COLUMNS =
             "note_id, user_id, title, content, category, note_type, " +
-            "is_pinned, checklist_items, created_at, updated_at";
+            "is_pinned, checklist_items, importance, reminder_time, " +
+            "reminder_enabled, created_at, updated_at";
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
@@ -65,50 +66,66 @@ public class NoteRepository {
     // Create note for a user
     public Note save(Note note) {
 
-    String sql =
-            "INSERT INTO notes " +
-            "(user_id, title, content, category, note_type, " +
-            "is_pinned, checklist_items) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql =
+                "INSERT INTO notes " +
+                "(user_id, title, content, category, note_type, " +
+                "is_pinned, checklist_items, importance, reminder_time, " +
+                "reminder_enabled) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    String checklistJson = serializeChecklist(note);
+        String checklistJson = serializeChecklist(note);
 
-    KeyHolder keyHolder = new GeneratedKeyHolder();
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
-    jdbcTemplate.update(connection -> {
+        jdbcTemplate.update(connection -> {
 
-        PreparedStatement ps =
-                connection.prepareStatement(
-                        sql,
-                        new String[]{"note_id"}
-                );
+            PreparedStatement ps =
+                    connection.prepareStatement(
+                            sql,
+                            new String[]{"note_id"}
+                    );
 
-        ps.setInt(1, note.getUserId());
-        ps.setString(2, note.getTitle());
-        ps.setString(3, note.getContent());
-        ps.setString(4, note.getCategory());
-        ps.setString(5, note.getNoteType());
-        ps.setBoolean(6, note.isPinned());
-        ps.setString(7, checklistJson);
+            ps.setInt(1, note.getUserId());
+            ps.setString(2, note.getTitle());
+            ps.setString(3, note.getContent());
+            ps.setString(4, note.getCategory());
+            ps.setString(5, note.getNoteType());
+            ps.setBoolean(6, note.isPinned());
+            ps.setString(7, checklistJson);
+            ps.setString(8, note.getImportance());
 
-        return ps;
+            ps.setTimestamp(
+                    9,
+                    note.getReminderTime() == null
+                            ? null
+                            : Timestamp.valueOf(
+                                    note.getReminderTime()
+                            )
+            );
 
-    }, keyHolder);
+            ps.setBoolean(10, note.isReminderEnabled());
 
-    Number key = keyHolder.getKey();
+            return ps;
 
-    if (key != null) {
-        return findById(
-                note.getUserId(),
-                key.intValue()
-        ).orElse(note);
-    }
+        }, keyHolder);
 
-    return note;
+        Number key = keyHolder.getKey();
+
+        if (key != null) {
+            return findById(
+                    note.getUserId(),
+                    key.intValue()
+            ).orElse(note);
+        }
+
+        return note;
     }
 
     // Update only user's own note
-    public Note update(int userId, int noteId, Note note) {
+    public Note update(
+            int userId,
+            int noteId,
+            Note note) {
 
         String sql =
                 "UPDATE notes SET " +
@@ -118,6 +135,9 @@ public class NoteRepository {
                 "note_type = ?, " +
                 "is_pinned = ?, " +
                 "checklist_items = ?, " +
+                "importance = ?, " +
+                "reminder_time = ?, " +
+                "reminder_enabled = ?, " +
                 "updated_at = CURRENT_TIMESTAMP " +
                 "WHERE note_id = ? AND user_id = ?";
 
@@ -129,15 +149,29 @@ public class NoteRepository {
                 note.getNoteType(),
                 note.isPinned(),
                 serializeChecklist(note),
+                note.getImportance(),
+
+                note.getReminderTime() == null
+                        ? null
+                        : Timestamp.valueOf(
+                                note.getReminderTime()
+                        ),
+
+                note.isReminderEnabled(),
                 noteId,
                 userId
         );
 
-        return findById(userId, noteId).orElse(note);
+        return findById(
+                userId,
+                noteId
+        ).orElse(note);
     }
 
     // Delete only user's own note
-    public boolean delete(int userId, int noteId) {
+    public boolean delete(
+            int userId,
+            int noteId) {
 
         return jdbcTemplate.update(
                 "DELETE FROM notes " +
@@ -148,7 +182,9 @@ public class NoteRepository {
     }
 
     // Search only inside user's notes
-    public List<Note> search(int userId, String keyword) {
+    public List<Note> search(
+            int userId,
+            String keyword) {
 
         String pattern = "%" + keyword + "%";
 
@@ -166,7 +202,9 @@ public class NoteRepository {
     }
 
     // Pin/unpin only user's own note
-    public Optional<Note> togglePin(int userId, int noteId) {
+    public Optional<Note> togglePin(
+            int userId,
+            int noteId) {
 
         int updated = jdbcTemplate.update(
                 "UPDATE notes " +
@@ -190,14 +228,53 @@ public class NoteRepository {
 
                 Note note = new Note();
 
-                note.setNoteId(rs.getInt("note_id"));
-                note.setUserId(rs.getInt("user_id"));
-                note.setTitle(rs.getString("title"));
-                note.setContent(rs.getString("content"));
-                note.setCategory(rs.getString("category"));
-                note.setNoteType(rs.getString("note_type"));
-                note.setPinned(rs.getBoolean("is_pinned"));
+                note.setNoteId(
+                        rs.getInt("note_id")
+                );
 
+                note.setUserId(
+                        rs.getInt("user_id")
+                );
+
+                note.setTitle(
+                        rs.getString("title")
+                );
+
+                note.setContent(
+                        rs.getString("content")
+                );
+
+                note.setCategory(
+                        rs.getString("category")
+                );
+
+                note.setNoteType(
+                        rs.getString("note_type")
+                );
+
+                note.setPinned(
+                        rs.getBoolean("is_pinned")
+                );
+
+                // Reminder / importance fields
+                note.setImportance(
+                        rs.getString("importance")
+                );
+
+                Timestamp reminder =
+                        rs.getTimestamp("reminder_time");
+
+                note.setReminderTime(
+                        reminder == null
+                                ? null
+                                : reminder.toLocalDateTime()
+                );
+
+                note.setReminderEnabled(
+                        rs.getBoolean("reminder_enabled")
+                );
+
+                // Checklist
                 String checklistJson =
                         rs.getString("checklist_items");
 
@@ -205,17 +282,19 @@ public class NoteRepository {
                         deserializeChecklist(checklistJson)
                 );
 
+                // Created date
                 Timestamp created =
                         rs.getTimestamp("created_at");
-
-                Timestamp updated =
-                        rs.getTimestamp("updated_at");
 
                 if (created != null) {
                     note.setCreatedAt(
                             created.toLocalDateTime()
                     );
                 }
+
+                // Updated date
+                Timestamp updated =
+                        rs.getTimestamp("updated_at");
 
                 if (updated != null) {
                     note.setUpdatedAt(

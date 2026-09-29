@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS notes (
     note_type VARCHAR(20) NOT NULL,
     is_pinned BOOLEAN DEFAULT FALSE,
     checklist_items TEXT,
+
     importance VARCHAR(20) DEFAULT 'MEDIUM',
     reminder_time TIMESTAMP NULL,
     reminder_enabled BOOLEAN DEFAULT FALSE,
@@ -40,86 +41,8 @@ CREATE TABLE IF NOT EXISTS notes (
 
 
 -- ==============================
--- DEMO USER
+-- EXISTING DATABASE MIGRATION
 -- ==============================
-
-INSERT INTO users (username, password)
-SELECT 'demo', 'demo123'
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM users
-    WHERE username = 'demo'
-);
-
-
--- ==============================
--- DEMO NOTES
--- ==============================
-
-INSERT INTO notes
-(
-    user_id,
-    title,
-    content,
-    category,
-    note_type,
-    is_pinned,
-    checklist_items,
-    importance,
-    reminder_time,
-    reminder_enabled
-)
-SELECT
-    user_id,
-    'Welcome to NoteFlow',
-    'This is your personal space for capturing ideas, planning work, and keeping your thoughts organized.',
-    'Personal',
-    'TEXT',
-    TRUE,
-    '[]',
-    'HIGH',
-    NULL,
-    FALSE
-FROM users
-WHERE username = 'demo'
-AND NOT EXISTS (
-    SELECT 1
-    FROM notes
-    WHERE title = 'Welcome to NoteFlow'
-);
-
-
-INSERT INTO notes
-(
-    user_id,
-    title,
-    content,
-    category,
-    note_type,
-    is_pinned,
-    checklist_items,
-    importance,
-    reminder_time,
-    reminder_enabled
-)
-SELECT
-    user_id,
-    'Java project roadmap',
-    'Sketch the API endpoints, complete the data model, then prepare your final demo.',
-    'College',
-    'TEXT',
-    FALSE,
-    '[]',
-    'MEDIUM',
-    NULL,
-    FALSE
-FROM users
-WHERE username = 'demo'
-AND NOT EXISTS (
-    SELECT 1
-    FROM notes
-    WHERE title = 'Java project roadmap'
-);
 
 ALTER TABLE notes
 ADD COLUMN IF NOT EXISTS importance VARCHAR(20) DEFAULT 'MEDIUM';

@@ -13,6 +13,9 @@ public class Note {
     private String category;
     private String noteType;
     private boolean pinned;
+    private String importance = "MEDIUM";
+    private LocalDateTime reminderTime;
+    private boolean reminderEnabled;
     private List<ChecklistItem> checklistItems = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -23,6 +26,7 @@ public class Note {
     public Note(Integer noteId, Integer userId, String title,
                 String content, String category, String noteType,
                 boolean pinned, List<ChecklistItem> checklistItems,
+                String importance, LocalDateTime reminderTime, boolean reminderEnabled,
                 LocalDateTime createdAt, LocalDateTime updatedAt) {
 
         this.noteId = noteId;
@@ -91,6 +95,30 @@ public class Note {
     public boolean isPinned() {
         return pinned;
     }
+    
+    public String getImportance() {
+    return importance;
+}
+
+public void setImportance(String importance) {
+    this.importance = importance;
+}
+
+public LocalDateTime getReminderTime() {
+    return reminderTime;
+}
+
+public void setReminderTime(LocalDateTime reminderTime) {
+    this.reminderTime = reminderTime;
+}
+
+public boolean isReminderEnabled() {
+    return reminderEnabled;
+}
+
+public void setReminderEnabled(boolean reminderEnabled) {
+    this.reminderEnabled = reminderEnabled;
+}
 
     public void setPinned(boolean pinned) {
         this.pinned = pinned;
