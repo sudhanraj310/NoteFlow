@@ -207,6 +207,8 @@ async function checkLogin() {
 
     elements.authScreen.hidden = true;
     await loadNotes();
+    openNoteFromNotification();
+    await subscribeToPushNotifications();
   } catch {
     elements.authScreen.hidden = false;
   }
@@ -301,6 +303,24 @@ async function loadNotes(showLoader = true) {
   }
 }
 
+function openNoteFromNotification() {
+  const params = new URLSearchParams(window.location.search);
+  const noteId = Number(params.get("noteId"));
+
+  if (!noteId) return;
+
+  const note = state.allNotes.find(item => item.noteId === noteId);
+
+  if (note) {
+    viewNote(note);
+  }
+
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.pathname
+  );
+}
 function renderNotes() {
   hideStates();
   const notes = getFilteredNotes();
@@ -955,3 +975,80 @@ if (localStorage.getItem("noteflow-theme") === "dark") {
 }
 
 updateThemeButton();
+
+async function subscribeToPushNotifications() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    console.log("Web Push is not supported.");
+    return false;
+  }
+
+  if (!("Notification" in window)) {
+    console.log("Notifications are not supported.");
+    return false;
+  }
+
+  if (Notification.permission !== "granted") {
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      console.log("Notification permission not granted.");
+      return false;
+    }
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+
+  const response = await fetch("/api/push/public-key");
+
+  if (!response.ok) {
+    console.error("Failed to get VAPID public key.");
+    return false;
+  }
+
+  const publicKey = await response.text();
+
+  const subscription =
+    await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+
+  const subscriptionJson = subscription.toJSON();
+
+  const saveResponse = await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    credentials: "include",
+    body: JSON.stringify(subscriptionJson)
+  });
+
+  if (!saveResponse.ok) {
+    console.error("Failed to save push subscription.");
+    return false;
+  }
+
+  console.log("Push subscription saved successfully.");
+  return true;
+}
+window.subscribeToPushNotifications = subscribeToPushNotifications;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat(
+    (4 - (base64String.length % 4)) % 4
+  );
+
+  const base64 = (
+    base64String +
+    padding
+  )
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData = window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(char => char.charCodeAt(0))
+  );
+}

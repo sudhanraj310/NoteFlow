@@ -16,6 +16,7 @@ public class Note {
     private String importance = "MEDIUM";
     private LocalDateTime reminderTime;
     private boolean reminderEnabled;
+    private boolean reminderSent;
     private List<ChecklistItem> checklistItems = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -118,6 +119,14 @@ public boolean isReminderEnabled() {
 
 public void setReminderEnabled(boolean reminderEnabled) {
     this.reminderEnabled = reminderEnabled;
+}
+
+public boolean isReminderSent() {
+    return reminderSent;
+}
+
+public void setReminderSent(boolean reminderSent) {
+    this.reminderSent = reminderSent;
 }
 
     public void setPinned(boolean pinned) {

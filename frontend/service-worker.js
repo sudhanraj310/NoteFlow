@@ -1,4 +1,4 @@
-const CACHE_NAME = "noteflow-v1";
+const CACHE_NAME = "noteflow-v3";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -41,23 +41,66 @@ self.addEventListener("fetch", event => {
   );
 });
 
-self.addEventListener("notificationclick", event => {
-  event.notification.close();
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+
+    const noteId = event.notification.data?.noteId;
+
+    const url = noteId
+        ? `/?noteId=${noteId}`
+        : "/";
+
+    event.waitUntil(
+        clients.matchAll({
+            type: "window",
+            includeUncontrolled: true
+        }).then((clientList) => {
+
+            for (const client of clientList) {
+                if ("focus" in client) {
+                    client.focus();
+
+                    if (noteId && "navigate" in client) {
+                        return client.navigate(url);
+                    }
+
+                    return client;
+                }
+            }
+
+            if (clients.openWindow) {
+                return clients.openWindow(url);
+            }
+        })
+    );
+});
+
+self.addEventListener("push", event => {
+  let data = {
+    title: "NoteFlow",
+    body: "You have a reminder."
+  };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (error) {
+      console.error("Invalid push data:", error);
+    }
+  }
 
   event.waitUntil(
-    clients.matchAll({
-      type: "window",
-      includeUncontrolled: true
-    }).then(clientList => {
-      for (const client of clientList) {
-        if ("focus" in client) {
-          return client.focus();
+    self.registration.showNotification(
+      data.title || "NoteFlow",
+      {
+        body: data.body || "You have a reminder.",
+        icon: "/icons/noteflow.svg",
+        badge: "/icons/noteflow.svg",
+        tag: data.tag || "noteflow-reminder",
+        data: {
+          noteId: data.noteId || null
         }
       }
-
-      if (clients.openWindow) {
-        return clients.openWindow("/");
-      }
-    })
+    )
   );
 });

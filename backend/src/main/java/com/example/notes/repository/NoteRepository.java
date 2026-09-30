@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public class NoteRepository {
@@ -22,7 +23,7 @@ public class NoteRepository {
     private static final String SELECT_COLUMNS =
             "note_id, user_id, title, content, category, note_type, " +
             "is_pinned, checklist_items, importance, reminder_time, " +
-            "reminder_enabled, created_at, updated_at";
+            "reminder_enabled, reminder_sent, created_at, updated_at";
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
@@ -70,8 +71,8 @@ public class NoteRepository {
                 "INSERT INTO notes " +
                 "(user_id, title, content, category, note_type, " +
                 "is_pinned, checklist_items, importance, reminder_time, " +
-                "reminder_enabled) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "reminder_enabled, reminder_sent) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String checklistJson = serializeChecklist(note);
 
@@ -104,7 +105,7 @@ public class NoteRepository {
             );
 
             ps.setBoolean(10, note.isReminderEnabled());
-
+            ps.setBoolean(11, note.isReminderSent());
             return ps;
 
         }, keyHolder);
@@ -138,6 +139,7 @@ public class NoteRepository {
                 "importance = ?, " +
                 "reminder_time = ?, " +
                 "reminder_enabled = ?, " +
+                "reminder_sent = ?, " +
                 "updated_at = CURRENT_TIMESTAMP " +
                 "WHERE note_id = ? AND user_id = ?";
 
@@ -158,6 +160,7 @@ public class NoteRepository {
                         ),
 
                 note.isReminderEnabled(),
+                note.isReminderSent(),
                 noteId,
                 userId
         );
@@ -201,26 +204,49 @@ public class NoteRepository {
         );
     }
 
-    // Pin/unpin only user's own note
-    public Optional<Note> togglePin(
-            int userId,
-            int noteId) {
+ // Pin/unpin only user's own note
+public Optional<Note> togglePin(
+        int userId,
+        int noteId) {
 
-        int updated = jdbcTemplate.update(
-                "UPDATE notes " +
-                "SET is_pinned = NOT is_pinned, " +
-                "updated_at = CURRENT_TIMESTAMP " +
-                "WHERE note_id = ? AND user_id = ?",
-                noteId,
-                userId
-        );
+    int updated = jdbcTemplate.update(
+            "UPDATE notes " +
+            "SET is_pinned = NOT is_pinned, " +
+            "updated_at = CURRENT_TIMESTAMP " +
+            "WHERE note_id = ? AND user_id = ?",
+            noteId,
+            userId
+    );
 
-        if (updated == 0) {
-            return Optional.empty();
-        }
-
-        return findById(userId, noteId);
+    if (updated == 0) {
+        return Optional.empty();
     }
+
+    return findById(userId, noteId);
+}
+
+public void markReminderSent(int noteId) {
+    jdbcTemplate.update(
+            "UPDATE notes SET reminder_sent = TRUE WHERE note_id = ?",
+            noteId
+    );
+}
+
+// Find all reminders that are due
+public List<Note> findDueReminders(LocalDateTime now) {
+
+    return jdbcTemplate.query(
+            "SELECT " + SELECT_COLUMNS +
+            " FROM notes " +
+            "WHERE reminder_enabled = TRUE " +
+            "AND reminder_sent = FALSE " +
+            "AND reminder_time IS NOT NULL " +
+            "AND reminder_time <= ? " +
+            "ORDER BY reminder_time ASC",
+            noteRowMapper,
+            Timestamp.valueOf(now)
+    );
+}
 
     // Convert database row into Note object
     private final org.springframework.jdbc.core.RowMapper<Note> noteRowMapper =
@@ -272,6 +298,10 @@ public class NoteRepository {
 
                 note.setReminderEnabled(
                         rs.getBoolean("reminder_enabled")
+                );
+
+                note.setReminderSent(
+                        rs.getBoolean("reminder_sent")
                 );
 
                 // Checklist
